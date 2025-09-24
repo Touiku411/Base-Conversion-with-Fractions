@@ -13,13 +13,22 @@ int charToValue(char c) {
 		return c - 'a' + 10;
 	return -1;
 }
-long long convertIntegerToDecimal(string integerPart, int base_n) {
+
+char valueToChar(int value) {
+	if (value >= 0 && value <= 9)
+		return value + '0';
+	else if (value >= 10 && value <= 35)
+		return (value - 10) + 'A';
+	return '?';
+}
+//n ->10(整數)
+long long N_to_Decimal_Integer(string integerPart, int base_n) {
 	long long decimaldigit = 0;
 	long long power = 1;
 	for (int i = integerPart.length() - 1; i >= 0; i--) {
 		int value = charToValue(integerPart[i]);
 		if (value == -1 || value >= base_n) {
-			cout << "Error" << integerPart[i] << i <<"\n";
+			cout << "位置" << i << integerPart[i] << "Error" << "\n";
 			return -1;
 		}
 		decimaldigit += value * power;
@@ -27,20 +36,66 @@ long long convertIntegerToDecimal(string integerPart, int base_n) {
 	}
 	return decimaldigit;
 }
-long long convertFractionalToDecimal(string franctionalPart, int base_m) {
-	long long decimaldigit = 0.0;
-	long long factor = 1 / base_m;
+//n ->10(小數)
+double N_to_Decimal_Fractional(string franctionalPart, int base_n) {
+	double decimaldigit = 0.0;
+	double factor = 1.0 / base_n;
 	for (int i = 0; i < franctionalPart.length() ; i++) {
 		int value = charToValue(franctionalPart[i]);
-		if (value == -1 || value >= base_m) {
-			cout << "Error" << franctionalPart[i] <<  i <<"\n";
+		if (value == -1 || value >= base_n) {
+			cout << "位置" << i << franctionalPart[i] << "Error" << "\n";
 			return -1;
 		}
 		decimaldigit += value * factor;
-		factor /= base_m;
+		factor /= base_n;
 	}
 	return decimaldigit;
 }
+//10-> m(整數)
+string Decimal_to_M_Integer(long long IntegerDecimal, int base_m) {
+	if (IntegerDecimal == 0)
+		return "0";
+
+	string result = "";
+	bool isNegative = false;
+
+	if (IntegerDecimal < 0) {
+		isNegative = true;
+		IntegerDecimal = -IntegerDecimal;
+	}
+	while (IntegerDecimal > 0) {
+		int remainder = IntegerDecimal % base_m;
+		result = valueToChar(remainder) + result;
+		IntegerDecimal /= base_m;
+	}
+	if (isNegative) {
+		result = "-" + result;
+	}
+
+	return result;
+}
+
+//10->m
+string Decimal_to_M_Fraction(double FractionalDecimal,int base_m, int maxDigits = 20) {
+	if (FractionalDecimal < 1e-15) 
+		return "0";
+	
+	string result = "";
+	int digitsCount = 0;
+	double current = FractionalDecimal;
+
+	while (current > 1e-15 && digitsCount < maxDigits) {
+		current *= base_m;
+		int integerPart = static_cast<int>(current + 1e-10);
+		result += valueToChar(integerPart);
+		current -= integerPart;
+		digitsCount++;
+	}
+
+	return result;
+}
+
+
 int main()
 {
 	string input;
@@ -66,7 +121,7 @@ int main()
 
 		size_t secondparenPos = input.find('(', arrowPos);
 		base_m = stoi(input.substr(secondparenPos + 1));
-		//檢查正負號
+	
 		int startIndex = 0;
 		if (input[0] == '+' || input[0] == '-') {
 			sign = input[0];
@@ -79,19 +134,31 @@ int main()
 			fractionalPart = input.substr(dotPos + 1, parenPos - dotPos - 1);
 		}
 		else {
-			integerPart = input.substr(startIndex, dotPos - startIndex);
+			integerPart = input.substr(startIndex, parenPos - startIndex);
 			fractionalPart = "0";
 		}
+		//->decimal
+		long long IntegerDecimal =  N_to_Decimal_Integer(integerPart, base_n);
+		double FractionalDecimal =  N_to_Decimal_Fractional(fractionalPart, base_n);
+	
+		//to base_m
+		string IntegerM = Decimal_to_M_Integer(IntegerDecimal, base_m);
+		string FractionM = Decimal_to_M_Fraction(FractionalDecimal, base_m);
 
-		cout << convertIntegerToDecimal(integerPart, base_n);
-		cout << "\n";
-		cout << convertFractionalToDecimal(fractionalPart, base_m);
 
-		//cout << sign << endl;
-		//cout << integerPart << endl;
-		//cout << fractionalPart << endl;
-		//cout << base_n << endl;
-		//cout << base_m << endl;
+		if (sign == '-') {
+			IntegerM = "-" + IntegerM;
+		}
+		if (IntegerM == "-0" && FractionM == "0") {
+			IntegerM = "0";
+		}
+
+		if (FractionM == "0") {
+			cout << IntegerM << "(" << base_m << ")" << endl;
+		}
+		else {
+			cout << IntegerM << "." << FractionM << "(" << base_m << ")" << endl;
+		}
 	}
 
 	
