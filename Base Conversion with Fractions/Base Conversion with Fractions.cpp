@@ -1,6 +1,8 @@
 ﻿//1121645
 #include <iostream>
 #include <string>
+#include <numeric>
+#include <unordered_map>
 
 using namespace std;
 
@@ -36,20 +38,23 @@ long long N_to_Decimal_Integer(string integerPart, int base_n) {
 	}
 	return decimaldigit;
 }
-//n ->10(小數)
-double N_to_Decimal_Fractional(string franctionalPart, int base_n) {
-	double decimaldigit = 0.0;
-	double factor = 1.0 / base_n;
-	for (int i = 0; i < franctionalPart.length() ; i++) {
-		int value = charToValue(franctionalPart[i]);
-		if (value == -1 || value >= base_n) {
-			cout << "位置" << i << franctionalPart[i] << "Error" << "\n";
-			return -1;
+
+
+pair<long long,long long> N_to_Decimal_Fractional(string franctionalPart, int base_n) {
+	long long fenzi = 0;
+	long long fenmu = 1;
+	for (char c : franctionalPart) {
+		if (charToValue(c) >= base_n || charToValue(c) == -1) {
+			cout << "錯誤\n";
+			return { -1,-1 };
 		}
-		decimaldigit += value * factor;
-		factor /= base_n;
+		fenzi = fenzi * base_n + charToValue(c);
+		fenmu *= base_n;
 	}
-	return decimaldigit;
+	long long g = gcd(fenzi, fenmu);
+	fenmu /= g;
+	fenzi /= g;
+	return { fenzi,fenmu };
 }
 //10-> m(整數)
 string Decimal_to_M_Integer(long long IntegerDecimal, int base_m) {
@@ -76,44 +81,32 @@ string Decimal_to_M_Integer(long long IntegerDecimal, int base_m) {
 }
 
 //10->m
-string Decimal_to_M_Fraction(double FractionalDecimal,int base_m, int maxDigits = 20) {
-	if (FractionalDecimal < 1e-15) 
-		return "0";
-	
+string Decimal_to_M_Fraction(long long fenzi, long long fenmu,int base_m) {
+	if (fenzi == 0)return "0";
+
+	unordered_map<long long, int> seen;
+	int pos = 0;
 	string result = "";
-	int digitsCount = 0;
-	double current = FractionalDecimal;
 
-	while (current > 1e-15 && digitsCount < maxDigits) {
-		current *= base_m;
-		int integerPart = static_cast<int>(current + 1e-10);
-		result += valueToChar(integerPart);
-		current -= integerPart;
-		digitsCount++;
+	while (fenzi != 0) {
+		if (seen.count(fenzi)) {
+			//是循環小數
+			int cyclestart = seen[fenzi];
+			string noneRepeat = result.substr(0, cyclestart);
+			string Repeat = result.substr(cyclestart);
+			return noneRepeat + "[" + Repeat + "]";
+		}
+		seen[fenzi] = pos++;
+		fenzi *= base_m;
+		int digit = fenzi / fenmu;
+
+		result += valueToChar(digit);//小數部分
+		fenzi = fenzi % fenmu;
 	}
-
 	return result;
 }
 
-bool cycledetect(string FractionM, string& cyclePattern, int MaxDigits = 20) {
-	int len = min(static_cast<int>(FractionM.length()), 20);
-	for (int startIndex = 0; startIndex < len / 2; startIndex++) {
-		for (int cyclelen = 1; cyclelen < (len - startIndex) / 2; cyclelen++) {
-			bool isCycle = true;
-			for (int j = startIndex;  j + cyclelen < len; j++) {
-				if (FractionM[j] != FractionM[j + cyclelen]) {
-					isCycle = false;
-					break;
-				}
-			}
-			if (isCycle) {
-				cyclePattern = FractionM.substr(startIndex, cyclelen);
-				return true;
-			}
-		}
-	}
-	return false;
-}
+
 int main()
 {
 	string input;
@@ -157,11 +150,13 @@ int main()
 		}
 		//->decimal
 		long long IntegerDecimal =  N_to_Decimal_Integer(integerPart, base_n);
-		double FractionalDecimal =  N_to_Decimal_Fractional(fractionalPart, base_n);
-	
+		auto fraction =  N_to_Decimal_Fractional(fractionalPart, base_n);
+		
 		//to base_m
 		string IntegerM = Decimal_to_M_Integer(IntegerDecimal, base_m);
-		string FractionM = Decimal_to_M_Fraction(FractionalDecimal, base_m);
+		long long fenzi = fraction.first;
+		long long fenmu = fraction.second;
+		string FractionM = Decimal_to_M_Fraction(fenzi,fenmu,base_m);
 
 
 		if (sign == '-') {
@@ -170,12 +165,8 @@ int main()
 		if (IntegerM == "-0" && FractionM == "0") {
 			IntegerM = "0";
 		}
-		string cyclePattern = "";
 		if (FractionM == "0") {
 			cout << IntegerM << "(" << base_m << ")" << endl;
-		}
-		else if (cycledetect(FractionM,cyclePattern)){
-			cout << IntegerM << ".[" << cyclePattern << "](" << base_m << ")" << endl;
 		}
 		else {
 			cout << IntegerM << "." << FractionM << "(" << base_m << ")" << endl;
