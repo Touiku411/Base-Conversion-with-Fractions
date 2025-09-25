@@ -95,7 +95,25 @@ string Decimal_to_M_Fraction(double FractionalDecimal,int base_m, int maxDigits 
 	return result;
 }
 
-
+bool cycledetect(string FractionM, string& cyclePattern, int MaxDigits = 20) {
+	int len = min(static_cast<int>(FractionM.length()), 20);
+	for (int startIndex = 0; startIndex < len / 2; startIndex++) {
+		for (int cyclelen = 1; cyclelen < (len - startIndex) / 2; cyclelen++) {
+			bool isCycle = true;
+			for (int j = startIndex;  j + cyclelen < len; j++) {
+				if (FractionM[j] != FractionM[j + cyclelen]) {
+					isCycle = false;
+					break;
+				}
+			}
+			if (isCycle) {
+				cyclePattern = FractionM.substr(startIndex, cyclelen);
+				return true;
+			}
+		}
+	}
+	return false;
+}
 int main()
 {
 	string input;
@@ -152,9 +170,12 @@ int main()
 		if (IntegerM == "-0" && FractionM == "0") {
 			IntegerM = "0";
 		}
-
+		string cyclePattern = "";
 		if (FractionM == "0") {
 			cout << IntegerM << "(" << base_m << ")" << endl;
+		}
+		else if (cycledetect(FractionM,cyclePattern)){
+			cout << IntegerM << ".[" << cyclePattern << "](" << base_m << ")" << endl;
 		}
 		else {
 			cout << IntegerM << "." << FractionM << "(" << base_m << ")" << endl;
