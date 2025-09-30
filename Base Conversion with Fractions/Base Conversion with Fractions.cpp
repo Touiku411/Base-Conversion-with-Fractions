@@ -81,20 +81,26 @@ string Decimal_to_M_Integer(long long IntegerDecimal, int base_m) {
 }
 
 //10->m
-string Decimal_to_M_Fraction(long long fenzi, long long fenmu,int base_m) {
-	if (fenzi == 0)return "0";
+pair<string,string> Decimal_to_M_Fraction(long long fenzi, long long fenmu,int base_m) {
+	if (fenzi == 0)return { "","" };
 
 	unordered_map<long long, int> seen;
 	int pos = 0;
 	string result = "";
-
+	string xuhuan = "";
 	while (fenzi != 0) {
 		if (seen.count(fenzi)) {
 			//是循環小數
 			int cyclestart = seen[fenzi];
 			string noneRepeat = result.substr(0, cyclestart);
 			string Repeat = result.substr(cyclestart);
-			return noneRepeat + "[" + Repeat + "]";
+			xuhuan = noneRepeat + "[" + Repeat + "]";
+			
+			while (result.length() < 20) {
+				result += Repeat;
+			}
+			result = result.substr(0, 20);
+			break;
 		}
 		seen[fenzi] = pos++;
 		fenzi *= base_m;
@@ -103,14 +109,18 @@ string Decimal_to_M_Fraction(long long fenzi, long long fenmu,int base_m) {
 		result += valueToChar(digit);//小數部分
 		fenzi = fenzi % fenmu;
 	}
-	return result;
+	return { result,xuhuan };
 }
 
 
 int main()
 {
+
+	cout << "1121645\n";
+	cout << "Input ";
 	string input;
 	while (getline(cin, input)) {
+	;
 		char sign = '+';
 		string integerPart, fractionalPart;
 		int base_n, base_m;
@@ -120,11 +130,15 @@ int main()
 		size_t arrowPos = input.find("->");
 
 		if (parenPos == string::npos) {
-			cout << " Missing paren\n";
+			cout << " Missing )( paren\n";
+			cout << "s1121645\n";
+			cout << "Input ";
 			continue;
 		}
 		if (arrowPos == string::npos) {
 			cout << "Missing -> operation\n";
+			cout << "s1121645\n";
+			cout << "Input ";
 			continue;
 		}
 		//substr(pos, len)：从位置 pos 开始提取 len 个字符。﻿
@@ -156,21 +170,27 @@ int main()
 		string IntegerM = Decimal_to_M_Integer(IntegerDecimal, base_m);
 		long long fenzi = fraction.first;
 		long long fenmu = fraction.second;
-		string FractionM = Decimal_to_M_Fraction(fenzi,fenmu,base_m);
+		auto FractionM = Decimal_to_M_Fraction(fenzi,fenmu,base_m);
 
 
 		if (sign == '-') {
 			IntegerM = "-" + IntegerM;
 		}
-		if (IntegerM == "-0" && FractionM == "0") {
+		if (IntegerM == "-0" && (FractionM.first == "0" || FractionM.second == "0")) {
 			IntegerM = "0";
 		}
-		if (FractionM == "0") {
-			cout << IntegerM << "(" << base_m << ")" << endl;
+		if (FractionM.first == "" && FractionM.second == "") {
+			cout << "Output " << IntegerM << "(" << base_m << ")" << "\n\n";
+		}
+		else if(FractionM.second != "") {
+			cout << "Basic Output " << IntegerM << "." << FractionM.first << "...(" << base_m << ")" << "\n";
+			cout << "Bonus Output " << IntegerM << "." << FractionM.second << "(" << base_m << ")" << "\n\n";
 		}
 		else {
-			cout << IntegerM << "." << FractionM << "(" << base_m << ")" << endl;
+			cout << "Output " << IntegerM << "." << FractionM.first << "(" << base_m << ")" << "\n\n";
 		}
+		cout << "s1121645\n";
+		cout << "Input ";
 	}
 
 	
